@@ -1,0 +1,89 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+
+# 1. Load dataset
+data = pd.read_csv("phishing_emails.csv")
+
+# 2. Display dataset
+print("Dataset:")
+print(data.head())
+
+# 3. Separate input and output
+X = data["text"]
+y = data["label"]
+
+# 4. Convert text into numerical features
+vectorizer = TfidfVectorizer(
+    lowercase=True,
+    stop_words="english",
+    ngram_range=(1, 2)
+)
+
+X_vectorized = vectorizer.fit_transform(X)
+
+# 5. Split dataset
+X_train, X_test, y_train, y_test = train_test_split(
+    X_vectorized,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
+
+# 6. Create ML model
+model = LogisticRegression()
+
+# 7. Train model
+model.fit(X_train, y_train)
+
+# 8. Predict test data
+y_pred = model.predict(X_test)
+
+# 9. Calculate accuracy
+accuracy = accuracy_score(y_test, y_pred)
+
+print("\nAccuracy:", accuracy * 100, "%")
+
+# 10. Classification report
+print("\nClassification Report:")
+print(classification_report(y_test, y_pred))
+
+# 11. Confusion matrix
+cm = confusion_matrix(y_test, y_pred)
+
+print("\nConfusion Matrix:")
+print(cm)
+
+# 12. Display confusion matrix
+plt.figure(figsize=(6, 4))
+
+sns.heatmap(
+    cm,
+    annot=True,
+    fmt="d",
+    cmap="Blues",
+    xticklabels=["Phishing", "Safe"],
+    yticklabels=["Phishing", "Safe"]
+)
+
+plt.xlabel("Predicted Label")
+plt.ylabel("Actual Label")
+plt.title("Phishing Email Detection - Confusion Matrix")
+plt.show()
+
+# 13. Test a new email
+new_email = [
+    "URGENT! Your bank account will be suspended. Click here to verify your password."
+]
+
+new_email_vectorized = vectorizer.transform(new_email)
+
+prediction = model.predict(new_email_vectorized)
+
+print("\nNew Email Prediction:", prediction[0])
